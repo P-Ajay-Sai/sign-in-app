@@ -1,27 +1,35 @@
 import React, { useState } from 'react';
 
 function SignUp() {
-  const [userInput, setUserInput] = useState({
-    fullName: '',
-    companyEmail: '',
-    phoneNumber: '',
-    companyName: '',
-    cloudUsage: [],
-  });
+  const [fullName, setFullName] = useState('');
+  const [businessEmail, setBusinessEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [cloudUsage, setCloudUsage] = useState(['AWS']);
+  const [responseCode, setResponseCode] = useState('');
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name === 'cloudUsage') {
       const isChecked = e.target.checked;
-      setUserInput({
-        ...userInput,
-        [name]: isChecked ? [...userInput.cloudUsage, value] : userInput.cloudUsage.filter(item => item !== value),
-      });
+      setCloudUsage(prevCloudUsage => isChecked ? [...prevCloudUsage, value] : prevCloudUsage.filter(item => item !== value));
     } else {
-      setUserInput({
-        ...userInput,
-        [name]: value,
-      });
+      switch(name) {
+        case 'fullName':
+          setFullName(value);
+          break;
+        case 'businessEmail':
+          setBusinessEmail(value);
+          break;
+        case 'phoneNumber':
+          setPhoneNumber(value);
+          break;
+        case 'companyName':
+          setCompanyName(value);
+          break;
+        default:
+          break;
+      }
     }
   };
 
@@ -29,46 +37,55 @@ function SignUp() {
     e.preventDefault();
     // validate user input
     // send request to server to create new user account
-    console.log(userInput);
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        fullName,
+        businessEmail,
+        phoneNumber,
+        companyName,
+        cloudUsage
+      }),
+    };
+    fetch('https://96ww6dj39j.execute-api.us-east-1.amazonaws.com/Prod/companies', requestOptions)
+      .then(response => {
+        setResponseCode(response.status);
+      })
+      .catch(error => console.error('Error:', error));
   };
+
 
   const handleOptionChange = (e) => {
     const selectedOptions = [...e.target.selectedOptions].map(option => option.value);
-    setUserInput({
-      ...userInput,
-      cloudUsage: selectedOptions
-    });
+    setCloudUsage(selectedOptions);
   };
 
   return (
     <div>
       <form onSubmit={handleFormSubmit} style={{ paddingLeft: "auto" }}>
         <h1>Sign Up</h1>
-        <label>
-          Full Name:
-          <input type="text" name="fullName" value={userInput.fullName} onChange={handleInputChange} required />
-        </label>
-        <label>
-          Company Email:
-          <input type="email" name="companyEmail" value={userInput.companyEmail} onChange={handleInputChange} required />
-        </label>
-        <label>
-          Phone Number:
-          <input
-            type="tel"
-            name="phoneNumber"
-            value={userInput.phoneNumber}
-            onChange={handleInputChange}
-          />
-        </label>
-        <label>
-          Company Name:
-          <input type="text" name="companyName" value={userInput.companyName} onChange={handleInputChange} required />
-        </label>
-        <div className="form-group col-md-12">
-          <label >Cloud Usage:</label>
-          <select className=" col-md-12 selectpicker " name="cloudUsage" multiple data-live-search="true" value={userInput.cloudUsage} onChange={handleOptionChange} required>
-            <option value="AWS" selected>AWS</option>
+        <label htmlFor="fullName">Full Name:</label>
+        <input type="text" id="fullName" name="fullName" value={fullName} onChange={handleInputChange} required />
+        <label htmlFor="businessEmail">Business Email:</label>
+        <input type="email" id="businessEmail" name="businessEmail" value={businessEmail} onChange={handleInputChange} required />
+        <label htmlFor="phoneNumber">Phone Number:</label>
+        <input
+          type="tel"
+          id="phoneNumber"
+          name="phoneNumber"
+          value={phoneNumber}
+          onChange={handleInputChange}
+          aria-label="Phone Number"
+        />
+        <label htmlFor="companyName">Company Name:</label>
+        <input type="text" id="companyName" name="companyName" value={companyName} onChange={handleInputChange} required />
+        <div className="col-md-12 form-group ">
+          <label htmlFor="cloudUsage">Cloud Usage:</label>
+          <select id="cloudUsage" className="col-md-12 selectpicker" name="cloudUsage" multiple data-live-search="true" value={cloudUsage} onChange={handleOptionChange} aria-label="Cloud Usage" required>
+            <option value="AWS">AWS</option>
             <option value="Azure">Azure</option>
             <option value="GCP">GCP</option>
             <option value="Others">Others</option>
@@ -76,6 +93,7 @@ function SignUp() {
         </div>
         <button type="submit">Submit</button>
       </form>
+      {responseCode && <p>HTTP Response Code: {responseCode}</p>}
     </div>
   );
 }
